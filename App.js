@@ -6,34 +6,21 @@
  * @flow strict-local
  */
 
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
-  SafeAreaView,
   StyleSheet,
-  ScrollView,
   View,
   Text,
   Button,
   StatusBar,
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  TouchableWithoutFeedback,
-  Keyboard,
-  TextInput,
-  Platform,
-  Modal,
+  SafeAreaView,
+  ScrollView,
   Alert,
-  TouchableHighlight,
-  TouchableOpacity,
+  ActivityIndicator,
+  SectionList,
 } from 'react-native';
-import {RNCamera as Camera} from 'react-native-camera';
-import {
-  Header,
-  // LearnMoreLinks,
-  Colors,
-  // DebugInstructions,
-  // ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+
+import {Colors, Header} from 'react-native/Libraries/NewAppScreen';
 
 import {NavigationContainer} from '@react-navigation/native';
 import {
@@ -43,19 +30,84 @@ import {
 
 const Stack = createStackNavigator();
 
+const CameraLazy = React.lazy(() => {
+  return import(/* webpackChunkName:'CameraLazy'*/ './app/components/Camera');
+});
+
+// import CameraLazy from './components/Camera.js';
+const DATA = [
+  {
+    title: '组件',
+    data: ['Pizza', 'Burger', 'Risotto'],
+  },
+  {
+    title: 'API',
+    data: ['French Fries', 'Onion Rings', 'Fried Shrimps'],
+  },
+  {
+    title: '功能',
+    data: ['camera', '推送'],
+  },
+];
+const Item = ({title}) => (
+  <View
+    style={styleHome.item}
+    onPress={() => {
+      Alert.alert(title);
+    }}>
+    <Text style={styleHome.title}>{title}</Text>
+  </View>
+);
+
+const styleHome = StyleSheet.create({
+  item: {
+    backgroundColor: '#fafafa',
+    paddingStart: 14,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ebedf0',
+    // marginVertical: 8,
+  },
+  header: {
+    fontSize: 22,
+    paddingStart: 10,
+    paddingTop: 10,
+
+    backgroundColor: '#fff',
+    color: 'rgba(69, 90, 100, 0.6)',
+  },
+  title: {
+    fontSize: 16,
+    color: '#323233',
+  },
+});
 function HomeScreen({navigation}) {
   return (
-    <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
-      <Text>Home Screen</Text>
-      <Button
-        title="Go to Details"
-        onPress={() => navigation.navigate('Details')}
-      />
-      <Button
-        title="Go to Camera"
-        onPress={() => navigation.navigate('Camera')}
-      />
-    </View>
+    <>
+      <StatusBar barStyle="dark-content" />
+      <SafeAreaView>
+        <SectionList
+          style={styles.body}
+          ListHeaderComponent={<Header />}
+          sections={DATA}
+          onPress={() => {
+            alert('23');
+          }}
+          keyExtractor={(item, index) => item + index}
+          renderItem={({item}) => (
+            <Item
+              onPress={() => {
+                alert('23');
+              }}
+              title={item}
+            />
+          )}
+          renderSectionHeader={({section: {title}}) => (
+            <Text style={styleHome.header}>{title}</Text>
+          )}
+        />
+      </SafeAreaView>
+    </>
   );
 }
 
@@ -72,69 +124,28 @@ function DetailsScreen({navigation}) {
 }
 
 function CameraScreen() {
-  const [camera, setCamera] = useState(null);
-  const [cameraType, setCameraType] = useState(Camera.Constants.Type.back);
-
-  const takePicture = async () => {
-    if (camera) {
-      const options = {quality: 0.5, base64: true};
-      const data = await camera.takePictureAsync(options);
-      alert(data.uri);
-    }
-  };
-
-  //切换前后摄像头
-  const switchCamera = () => {
-    if (cameraType === Camera.Constants.Type.back) {
-      setCameraType(Camera.Constants.Type.front);
-    } else {
-      setCameraType(Camera.Constants.Type.back);
-    }
-  };
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    setTimeout(() => {
+      setVisible(true);
+    }, 300);
+  }, []);
+  if (!visible) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color="#ffffff" />
+      </View>
+    );
+  }
 
   return (
-    <View style={styles.container}>
-      <Camera
-        type={cameraType}
-        style={styles.preview}
-        ref={(cam) => {
-          setCamera(cam);
-        }}
-        flashMode={Camera.Constants.FlashMode.on}
-        androidCameraPermissionOptions={{
-          title: 'Permission to use camera',
-          message: 'We need your permission to use your camera',
-          buttonPositive: 'Ok',
-          buttonNegative: 'Cancel',
-        }}
-        androidRecordAudioPermissionOptions={{
-          title: 'Permission to use audio recording',
-          message: 'We need your permission to use your audio',
-          buttonPositive: 'Ok',
-          buttonNegative: 'Cancel',
-        }}
-        onGoogleVisionBarcodesDetected={({barcodes}) => {
-          console.log(barcodes);
-        }}>
-        <Text style={styles.button} onPress={switchCamera}>
-          [切换摄像头]
-        </Text>
-
-        <TouchableOpacity
-          onPress={() => {
-            takePicture();
-          }}
-          style={styles.capture}>
-          <Text style={{fontSize: 14}}> SNAP </Text>
-        </TouchableOpacity>
-      </Camera>
-    </View>
+    <React.Suspense fallback={<Text>Loading</Text>}>
+      <CameraLazy />
+    </React.Suspense>
   );
 }
 
 const App = () => {
-  // const [modalVisible, setModalVisible] = useState(false);
-
   return (
     <NavigationContainer>
       <Stack.Navigator
@@ -251,11 +262,7 @@ const styles = StyleSheet.create({
     marginTop: 32,
     paddingHorizontal: 24,
   },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: Colors.black,
-  },
+
   sectionDescription: {
     marginTop: 8,
     fontSize: 18,
@@ -314,6 +321,8 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'column',
     backgroundColor: 'black',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   preview: {
     flex: 1,
