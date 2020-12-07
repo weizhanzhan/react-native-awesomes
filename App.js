@@ -86,6 +86,10 @@ function HomeScreen({navigation}) {
     <>
       <StatusBar barStyle="dark-content" />
       <SafeAreaView>
+        <Button
+          title="Go to Camera   "
+          onPress={() => navigation.push('Camera')}
+        />
         <SectionList
           style={styles.body}
           ListHeaderComponent={<Header />}
